@@ -11,6 +11,7 @@ Depends: perl,
  vyatta-cfg (>= 0.15.33),
  vyatta-op,
  vyatta-bash | bash (>= 3.1),
- openvpn
+ openvpn,
+ openvpn-auth-ldap
 Description: Vyatta OpenVPN configuration/operational commands
  Vyatta configuration/operational templates and scripts for OpenVPN
