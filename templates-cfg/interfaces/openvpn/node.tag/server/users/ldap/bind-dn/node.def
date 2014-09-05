@@ -1,0 +1,3 @@
+type: txt 
+help: Bind DN (If your LDAP server doesn't support anonymous binds)
+val_help: txt; uid=Manager,ou=People,dc=example,dc=com

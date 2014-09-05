@@ -1,0 +1,3 @@
+type: txt 
+help: Group Search Filter
+val_help: txt; "(|(cn=developers)(cn=artists))"

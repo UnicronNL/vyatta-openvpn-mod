@@ -8,6 +8,7 @@ use Vyatta::Config;
 use Vyatta::TypeChecker;
 use NetAddr::IP;
 
+my $plugcnf_dir = '/opt/vyatta/etc/openvpn/plugin';
 my $ccd_dir = '/opt/vyatta/etc/openvpn/ccd';
 my $status_dir = '/opt/vyatta/etc/openvpn/status';
 my $status_itvl = 30;
@@ -58,6 +59,23 @@ my %fields = (
   _client_disable  => [],
   _dns_suffix	 => undef, 
   _ccd_exclusive => undef,
+  _ldap_binddn   => undef,
+  _ldap_bindpass   => undef,
+  _ldap_url      => undef,
+  _ldap_cacertdir  => undef,
+  _ldap_cacertfile => undef,
+  _ldap_ciphersuite  => undef,
+  _ldap_clientkey  => undef,
+  _ldap_clientcert => undef,
+  _ldap_entls    => undef,
+  _ldap_folref   => undef,
+  _ldap_nettime  => undef,
+  _auth_basedn   => undef,
+  _auth_seflt    => undef,
+  _auth_usegrp   => undef,
+  _grp_basedn    => undef,
+  _grp_memattr   => undef,
+  _grp_seflt     => undef,
 );
 
 my $iftype = 'interfaces openvpn';
@@ -76,6 +94,7 @@ sub new {
 sub setup {
   my ($self, $intf) = @_;
   my $config = new Vyatta::Config;
+  my @conf_file = ();
 
   # set up ccd for this interface
   $ccd_dir = "$ccd_dir/$intf";
@@ -98,6 +117,24 @@ sub setup {
   $self->{_mode} = $config->returnValue('mode');
   $self->{_server_subnet} = $config->returnValue('server subnet');
   $self->{_server_def} = (defined($self->{_server_subnet})) ? 1 : undef;
+  my @user_auth = $config->listNodes('server users');
+  $self->{_ldap_binddn} = $config->returnValue('server users ldap bind-dn');
+  $self->{_ldap_bindpass} = $config->returnValue('server users ldap bind-pass');
+  $self->{_ldap_url} = $config->returnValue('server users ldap server-url');
+  $self->{_ldap_cacertdir} = $config->returnValue('server users ldap ca-cert-dir');
+  $self->{_ldap_cacertfile} = $config->returnValue('server users ldap ca-cert-file');
+  $self->{_ldap_ciphersuite} = $config->returnValue('server users ldap cipher-suite');
+  $self->{_ldap_clientkey} = $config->returnValue('server users ldap client-key');
+  $self->{_ldap_clientcert} = $config->returnValue('server users ldap client-cert');
+  $self->{_ldap_entls} = $config->returnValue('server users ldap enable-tls');
+  $self->{_ldap_folref} = $config->returnValue('server users ldap follow-referrals');
+  $self->{_ldap_nettime} = $config->returnValue('server users ldap network-timeout');
+  $self->{_auth_basedn} = $config->returnValue('server users ldap authorize base-dn');
+  $self->{_auth_seflt} = $config->returnValue('server users ldap authorize search-filter');
+  $self->{_auth_usegrp} = $config->returnValue('server users ldap authorize use-group');
+  $self->{_grp_basedn} = $config->returnValue('server users ldap authorize group base-dn');
+  $self->{_grp_memattr} = $config->returnValue('server users ldap authorize group member-attr');
+  $self->{_grp_seflt} = $config->returnValue('server users ldap authorize group search-filter');
   $self->{_tls_ca} = $config->returnValue('tls ca-cert-file');
   $self->{_tls_cert} = $config->returnValue('tls cert-file');
   $self->{_tls_key} = $config->returnValue('tls key-file');
@@ -178,7 +215,85 @@ sub setup {
 
   my @options = $config->returnValues('openvpn-option');
   $self->{_options} = \@options;
+  if (@user_auth) {
+    system("mkdir -p $plugcnf_dir");
+  }
+  foreach my $auth_opt(@user_auth) {
+    open (my $fh,">$plugcnf_dir/${auth_opt}.conf") or die("Can't open $plugcnf_dir/${auth_opt}.conf: $!\n");
+    print $fh "";
+    close $fh;
+  }
 
+  foreach my $auth_opt(@user_auth) {
+    if ($auth_opt eq "ldap") {
+      push(@conf_file, "<LDAP>\n");
+      if ($self->{_ldap_url}) {
+        push(@conf_file, "\t", "URL", "\t", "$self->{_ldap_url}", "\n"); 
+      }
+      if ($self->{_ldap_binddn}) {
+        push(@conf_file, "\t", "BindDN", "\t", "\"", "$self->{_ldap_binddn}", "\"", "\n");
+      }
+      if ($self->{_ldap_bindpass}) {
+        push(@conf_file, "\t", "Password", "\t", "\"", "$self->{_ldap_bindpass}", "\"", "\n");
+      }
+      if ($self->{_ldap_cacertdir}) {
+        push(@conf_file, "\t", "TLSCACertDir", "\t", "$self->{_ldap_cacertdir}", "\n");
+      }
+      if ($self->{_ldap_cacertfile}) {
+        push(@conf_file, "\t", "TLSCACertFile", "\t", "$self->{_ldap_cacertfile}", "\n");
+      }
+      if ($self->{_ldap_ciphersuite}) {
+        push(@conf_file, "\t", "TLSCipherSuite", "\t", "$self->{_ldap_ciphersuite}", "\n");
+      }
+      if ($self->{_ldap_clientkey}) {
+        push(@conf_file, "\t", "TLSKeyFile", "\t", "$self->{_ldap_clientkey}", "\n");
+      }
+      if ($self->{_ldap_clientcert}) {
+        push(@conf_file, "\t", "TLSCertFile", "\t", "$self->{_ldap_clientcert}", "\n");
+      }
+      if ($self->{_ldap_entls} eq "true") {
+        push(@conf_file, "\t", "TLSEnable", "\t", "yes", "\n");
+      }
+      if ($self->{_ldap_folref} eq "true") {
+        push(@conf_file, "\t", "FollowReferrals", "\t", "yes", "\n");
+      }
+      if ($self->{_ldap_nettime}) {
+        push(@conf_file, "\t", "Timeout", "\t", "$self->{_ldap_nettime}", "\n");
+      }
+      push(@conf_file, "</LDAP>\n");
+      if (($self->{_auth_basedn}) || ($self->{_auth_seflt}) || ($self->{_auth_usegrp})) {
+        push(@conf_file, "<Authorization>\n");
+        if ($self->{_auth_basedn}) {
+          push(@conf_file, "\t", "BaseDN", "\t", "\"", "$self->{_auth_basedn}", "\"", "\n");
+        }
+        if ($self->{_auth_seflt}) {
+          push(@conf_file, "\t", "SearchFilter", "\t", "\"", "$self->{_auth_seflt}", "\"", "\n");
+        }
+        if ($self->{_auth_usegrp}) {
+          push(@conf_file, "\t", "RequireGroup", "\t", "$self->{_ldap_nettime}", "\n");
+        }
+        if (($self->{_grp_basedn}) || ($self->{_grp_memattr}) || ($self->{_grp_seflt})) {
+          push(@conf_file, "<Group>\n");
+          if ($self->{_grp_basedn}) {
+            push(@conf_file, "\t", "BaseDN", "\t", "\"", "$self->{_grp_basedn}", "\"", "\n");
+          }
+          if ($self->{_grp_memattr}) {
+            push(@conf_file, "\t", "MemberAttribute", "\t", "\"", "$self->{_grp_memattr}", "\"", "\n");
+          }
+          if ($self->{_grp_seflt}) {
+            push(@conf_file, "\t", "SearchFilter", "\t", "\"", "$self->{_grp_seflt}", "\"", "\n");
+          }
+          push(@conf_file, "</Group>\n");
+        }
+        push(@conf_file, "</Authorization>\n");
+      }
+    }
+    open (my $fh,">$plugcnf_dir/${auth_opt}.conf");
+    foreach (@conf_file) {
+      print $fh "$_";
+    }
+    close $fh;
+  }
   return 0;
 }
 
@@ -471,6 +586,8 @@ sub checkHeader {
 sub get_command {
   my ($self) = @_;
   my $cmd = "/usr/sbin/openvpn --daemon openvpn-$self->{_intf} --verb 3 --writepid /var/run/openvpn-$self->{_intf}.pid";
+  my $config = new Vyatta::Config;
+  $config->setLevel("$iftype $self->{_intf}");
   if ( $self->{_disable} ) { return ('disable', undef); }
 
   if ($self->{_ccd_exclusive}) {
@@ -770,6 +887,11 @@ sub get_command {
 
  if (defined ($self->{_dns_suffix})) {
    $cmd .= " --push dhcp-option DOMAIN $self->{_dns_suffix}"; 
+ }
+
+ my @user_auth = $config->listNodes('server users');
+ if ("ldap" ~~ @user_auth) {
+   $cmd .= " --plugin /usr/lib/openvpn/openvpn-auth-ldap.so $plugcnf_dir/ldap.conf";
  }
  
  if (defined ($self->{_server_mclients})) {

@@ -1,0 +1,3 @@
+type: txt 
+help: Base DN
+val_help: txt; "ou=People,dc=example,dc=com"

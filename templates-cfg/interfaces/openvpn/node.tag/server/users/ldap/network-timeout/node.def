@@ -1,0 +1,3 @@
+help: Network timeout (in seconds)
+type: u32
+default: 15
