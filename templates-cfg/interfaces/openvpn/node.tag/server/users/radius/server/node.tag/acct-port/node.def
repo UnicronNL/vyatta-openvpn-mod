@@ -1,0 +1,4 @@
+type: u32
+help: UDP port for radius accounting
+val_help: u32:1-65535 ; Numbered port
+default: 1813

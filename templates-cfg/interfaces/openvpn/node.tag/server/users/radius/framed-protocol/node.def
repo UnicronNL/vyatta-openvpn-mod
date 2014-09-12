@@ -1,0 +1,6 @@
+type: u32
+help: Framed protocol which is sent
+syntax:expression: ($VAR(@) > 0 && $VAR(@) < 8) ; \
+"Rule number must be between 1 and 7."
+val_help: u32:1-7 ; Framed protocol type
+

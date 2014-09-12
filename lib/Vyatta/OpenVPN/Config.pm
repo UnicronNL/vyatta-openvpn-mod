@@ -77,6 +77,22 @@ my %fields = (
   _grp_basedn    => undef,
   _grp_memattr   => undef,
   _grp_seflt     => undef,
+  _rd_authctrl   => undef,
+  _rd_frmdprot   => undef,
+  _rd_nas_ip     => undef,
+  _rd_nas_id     => undef,
+  _rd_nas_prttype  => undef,
+  _rd_overwcfg   => undef,
+  _rd_srv        => undef,
+  _rd_srv_acctprt  => undef,
+  _rd_srv_authprt  => undef,
+  _rd_srv_name   => undef,
+  _rd_srv_retry  => undef,
+  _rd_srv_ss     => undef,
+  _rd_srv_wait   => undef,
+  _rd_servtype   => undef,
+  _rd_to_sub     => undef,
+  _rd_to_p2p     => undef,
 );
 
 my $iftype = 'interfaces openvpn';
@@ -136,6 +152,16 @@ sub setup {
   $self->{_grp_basedn} = $config->returnValue('server users ldap authorize group base-dn');
   $self->{_grp_memattr} = $config->returnValue('server users ldap authorize group member-attr');
   $self->{_grp_seflt} = $config->returnValue('server users ldap authorize group search-filter');
+  my @rd_servers = $config->listNodes('server users radius server');
+  $self->{_rd_authctrl} = $config->returnValue('server users radius auth-control');
+  $self->{_rd_frmdprot} = $config->returnValue('server users radius framed-protocol');
+  $self->{_rd_nas_ip} = $config->returnValue('server users radius nas address');
+  $self->{_rd_nas_id} = $config->returnValue('server users radius nas identifier');
+  $self->{_rd_nas_prttype} = $config->returnValue('server users radius nas port-type');
+  $self->{_rd_overwcfg} = $config->returnValue('server users radius overwrite-cfg');
+  $self->{_rd_servtype} = $config->returnValue('server users radius service-type');
+  $self->{_rd_to_sub} = $config->returnValue('server users radius topology p2p');
+  $self->{_rd_to_p2p} = $config->returnValue('server users radius topology subnet');
   $self->{_tls_ca} = $config->returnValue('tls ca-cert-file');
   $self->{_tls_cert} = $config->returnValue('tls cert-file');
   $self->{_tls_key} = $config->returnValue('tls key-file');
@@ -289,6 +315,71 @@ sub setup {
         push(@conf_file, "</Authorization>\n");
       }
     }
+    if ($auth_opt eq "radius") {
+      if ($self->{_rd_nas_id}) {
+        push(@conf_file, "NAS-Identifier", "=", "$self->{_rd_nas_id}", "\n");
+      }
+      if ($self->{_rd_servtype}) {
+        push(@conf_file, "Service-Type", "=", "$self->{_rd_servtype}", "\n");
+      }
+      if ($self->{_rd_frmdprot}) {
+        push(@conf_file, "Framed-Protocol", "=", "$self->{_rd_frmdprot}", "\n");
+      }
+      if ($self->{_rd_nas_prttype}) {
+        push(@conf_file, "NAS-Port-Type", "=", "$self->{_rd_nas_prttype}", "\n");
+      }
+      if ($self->{_rd_nas_ip}) {
+        push(@conf_file, "NAS-IP-Address", "=", "$self->{_rd_nas_ip}", "\n");
+      }
+      push(@conf_file, "OpenVPNConfig", "=", "$configs_dir/openvpn-$self->{_intf}.conf", "\n");
+      if ($self->{_rd_to_sub} && $self->{_rd_to_p2p}) {
+        print "You can only use one of the options (subnet or p2p)\n";
+        return 1;
+      }
+      if ($self->{_rd_to_sub}) {
+        push(@conf_file, "subnet", "=", "$self->{_rd_to_sub}", "\n");
+      }
+      if ($self->{_rd_to_p2p}) {
+        push(@conf_file, "p2p", "=", "$self->{_rd_to_p2p}", "\n");
+      }
+      if ($self->{_rd_overwcfg}) {
+        push(@conf_file, "overwriteccfiles", "=", "$self->{_rd_overwcfg}", "\n");
+      }
+      if ($self->{_rd_authctrl}) {
+        push(@conf_file, "useauthcontrolfile", "=", "$self->{_rd_authctrl}", "\n");
+      }
+      foreach my $rd_server(@rd_servers) {
+        $self->{_rd_srv_acctprt} = $config->returnValue("server users radius server $rd_server acct-port");
+        $self->{_rd_srv_authprt} = $config->returnValue("server users radius server $rd_server auth-port");
+        $self->{_rd_srv_name} = $config->returnValue("server users radius server $rd_server name");
+        $self->{_rd_srv_retry} = $config->returnValue("server users radius server $rd_server retry");
+        $self->{_rd_srv_wait} = $config->returnValue("server users radius server $rd_server wait");
+        $self->{_rd_srv_ss} = $config->returnValue("server users radius server $rd_server shared-secret");
+        if (($self->{_rd_srv_acctprt}) || ($self->{_rd_srv_authprt}) || ($self->{_rd_srv_name}) || 
+           ($self->{_rd_srv_retry}) || ($self->{_rd_srv_ss})|| ($self->{_rd_srv_wait})) {
+          push(@conf_file, "\n", "server", "\n", "{", "\n");
+          if ($self->{_rd_srv_acctprt}) {
+            push(@conf_file, "\t", "acctport", "=", "$self->{_rd_srv_acctprt}", "\n");
+          }
+          if ($self->{_rd_srv_authprt}) {
+            push(@conf_file, "\t", "authport", "=", "$self->{_rd_srv_authprt}", "\n");
+          }
+          if ($self->{_rd_srv_name}) {
+            push(@conf_file, "\t", "name", "=", "$self->{_rd_srv_name}", "\n");
+          }
+          if ($self->{_rd_srv_retry}) {
+            push(@conf_file, "\t", "retry", "=", "$self->{_rd_srv_retry}", "\n");
+          }
+          if ($self->{_rd_srv_wait}) {
+            push(@conf_file, "\t", "wait", "=", "$self->{_rd_srv_wait}", "\n");
+          }
+          if ($self->{_rd_srv_ss}) {
+            push(@conf_file, "\t", "sharedsecret", "=", "$self->{_rd_srv_ss}", "\n");
+          }
+          push(@conf_file, "}", "\n");
+        }
+      }
+    }
     open (my $fh,">$plugcnf_dir/${auth_opt}.conf");
     foreach (@conf_file) {
       print $fh "$_";
@@ -387,7 +478,6 @@ sub setupOrig {
     }
   }
   $self->{_client_disable} = \@cdisable;
-
   $self->{_topo} = $config->returnOrigValue('server topology');
   $self->{_proto} = $config->returnOrigValue('protocol');
   $self->{_local_port} = $config->returnOrigValue('local-port');
@@ -549,6 +639,7 @@ sub isDifferentFrom {
   return 1 if ($this->{_ccd_exclusive} ne $that->{_ccd_exclusive});
   return 0;
 }
+
 
 my %encryption_cmd_hash = (
   'des' => ' --cipher des-cbc',
@@ -889,6 +980,7 @@ sub get_command {
     push(@conf_file, "push dhcp-option DNS $nserver\n");
    }
   }
+
  
   if (scalar(@{$self->{_push_route}}) > 0) { 
    for my $proute (@{$self->{_push_route}}) {
@@ -906,6 +998,9 @@ sub get_command {
  my @user_auth = $config->listNodes('server users');
  if ("ldap" ~~ @user_auth) {
    push(@conf_file, "plugin /usr/lib/openvpn/openvpn-auth-ldap.so $plugcnf_dir/ldap.conf\n");
+ }
+ if ("radius" ~~ @user_auth) {
+   push(@conf_file, "plugin /usr/lib/openvpn/radiusplugin.so $plugcnf_dir/radius.conf\n");
  }
  
  if (defined ($self->{_server_mclients})) {
@@ -1009,7 +1104,7 @@ sub get_command {
       $option = substr $option, 2;
      push(@conf_file, "$option\n");
     } else {
-      push(@conf_file, "$option\n");
+     push(@conf_file, "$option\n");
     }
   }
  }

@@ -1,0 +1,6 @@
+tag:
+type: txt
+help: Radius server definition
+val_help: <serverN>; radius name 
+syntax:expression: pattern $VAR(@) "^server[0-9]+$"
+        ; "Radius server entry must be named \"server<num>\""

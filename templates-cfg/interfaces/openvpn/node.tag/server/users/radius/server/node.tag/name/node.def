@@ -1,0 +1,4 @@
+type: txt
+help: The name or ip address of the radius server
+val_help: ipv4; IP address of radius server
+val_help: txt; Hostname of radius server

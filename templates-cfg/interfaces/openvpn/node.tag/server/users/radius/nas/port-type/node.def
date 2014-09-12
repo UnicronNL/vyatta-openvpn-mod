@@ -1,0 +1,5 @@
+type: u32
+help: NAS port type which is sent
+syntax:expression: ($VAR(@) > 0 && $VAR(@) < 44) ; \
+"Rule number must be between 1 and 43."
+val_help: u32:1-43 ; NAS port type
