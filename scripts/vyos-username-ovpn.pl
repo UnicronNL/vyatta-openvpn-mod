@@ -48,7 +48,7 @@ sub configure_users {
 	my $passwdCommand = "/usr/bin/ovpnauth";
 	my $passwdDB = "/opt/vyatta/etc/openvpn/users${tun}.db";
 	
-	$config->setLevel("$iftype $tun server users local");
+	$config->setLevel("$iftype $tun server authentication local username");
 	my @users = $config->listNodes();
 
 	unlink $passwdDB;

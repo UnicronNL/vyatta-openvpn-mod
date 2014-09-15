@@ -134,34 +134,34 @@ sub setup {
   $self->{_mode} = $config->returnValue('mode');
   $self->{_server_subnet} = $config->returnValue('server subnet');
   $self->{_server_def} = (defined($self->{_server_subnet})) ? 1 : undef;
-  my @user_auth = $config->listNodes('server users');
-  $self->{_ldap_binddn} = $config->returnValue('server users ldap bind-dn');
-  $self->{_ldap_bindpass} = $config->returnValue('server users ldap bind-pass');
-  $self->{_ldap_url} = $config->returnValue('server users ldap server-url');
-  $self->{_ldap_cacertdir} = $config->returnValue('server users ldap ca-cert-dir');
-  $self->{_ldap_cacertfile} = $config->returnValue('server users ldap ca-cert-file');
-  $self->{_ldap_ciphersuite} = $config->returnValue('server users ldap cipher-suite');
-  $self->{_ldap_clientkey} = $config->returnValue('server users ldap client-key');
-  $self->{_ldap_clientcert} = $config->returnValue('server users ldap client-cert');
-  $self->{_ldap_entls} = $config->returnValue('server users ldap enable-tls');
-  $self->{_ldap_folref} = $config->returnValue('server users ldap follow-referrals');
-  $self->{_ldap_nettime} = $config->returnValue('server users ldap network-timeout');
-  $self->{_auth_basedn} = $config->returnValue('server users ldap authorize base-dn');
-  $self->{_auth_seflt} = $config->returnValue('server users ldap authorize search-filter');
-  $self->{_auth_usegrp} = $config->returnValue('server users ldap authorize use-group');
-  $self->{_grp_basedn} = $config->returnValue('server users ldap authorize group base-dn');
-  $self->{_grp_memattr} = $config->returnValue('server users ldap authorize group member-attr');
-  $self->{_grp_seflt} = $config->returnValue('server users ldap authorize group search-filter');
-  my @rd_servers = $config->listNodes('server users radius server');
-  $self->{_rd_authctrl} = $config->returnValue('server users radius auth-control');
-  $self->{_rd_frmdprot} = $config->returnValue('server users radius framed-protocol');
-  $self->{_rd_nas_ip} = $config->returnValue('server users radius nas address');
-  $self->{_rd_nas_id} = $config->returnValue('server users radius nas identifier');
-  $self->{_rd_nas_prttype} = $config->returnValue('server users radius nas port-type');
-  $self->{_rd_overwcfg} = $config->returnValue('server users radius overwrite-cfg');
-  $self->{_rd_servtype} = $config->returnValue('server users radius service-type');
-  $self->{_rd_to_sub} = $config->returnValue('server users radius topology p2p');
-  $self->{_rd_to_p2p} = $config->returnValue('server users radius topology subnet');
+  my @user_auth = $config->listNodes('server authentication');
+  $self->{_ldap_binddn} = $config->returnValue('server authentication ldap bind-dn');
+  $self->{_ldap_bindpass} = $config->returnValue('server authentication ldap bind-pass');
+  $self->{_ldap_url} = $config->returnValue('server authentication ldap server-url');
+  $self->{_ldap_cacertdir} = $config->returnValue('server authentication ldap ca-cert-dir');
+  $self->{_ldap_cacertfile} = $config->returnValue('server authentication ldap ca-cert-file');
+  $self->{_ldap_ciphersuite} = $config->returnValue('server authentication ldap cipher-suite');
+  $self->{_ldap_clientkey} = $config->returnValue('server authentication ldap client-key');
+  $self->{_ldap_clientcert} = $config->returnValue('server authentication ldap client-cert');
+  $self->{_ldap_entls} = $config->returnValue('server authentication ldap enable-tls');
+  $self->{_ldap_folref} = $config->returnValue('server authentication ldap follow-referrals');
+  $self->{_ldap_nettime} = $config->returnValue('server authentication ldap network-timeout');
+  $self->{_auth_basedn} = $config->returnValue('server authentication ldap authorize base-dn');
+  $self->{_auth_seflt} = $config->returnValue('server authentication ldap authorize search-filter');
+  $self->{_auth_usegrp} = $config->returnValue('server authentication ldap authorize use-group');
+  $self->{_grp_basedn} = $config->returnValue('server authentication ldap authorize group base-dn');
+  $self->{_grp_memattr} = $config->returnValue('server authentication ldap authorize group member-attr');
+  $self->{_grp_seflt} = $config->returnValue('server authentication ldap authorize group search-filter');
+  my @rd_servers = $config->listNodes('server authentication radius server');
+  $self->{_rd_authctrl} = $config->returnValue('server authentication radius auth-control');
+  $self->{_rd_frmdprot} = $config->returnValue('server authentication radius framed-protocol');
+  $self->{_rd_nas_ip} = $config->returnValue('server authentication radius nas address');
+  $self->{_rd_nas_id} = $config->returnValue('server authentication radius nas identifier');
+  $self->{_rd_nas_prttype} = $config->returnValue('server authentication radius nas port-type');
+  $self->{_rd_overwcfg} = $config->returnValue('server authentication radius overwrite-cfg');
+  $self->{_rd_servtype} = $config->returnValue('server authentication radius service-type');
+  $self->{_rd_to_sub} = $config->returnValue('server authentication radius topology p2p');
+  $self->{_rd_to_p2p} = $config->returnValue('server authentication radius topology subnet');
   $self->{_tls_ca} = $config->returnValue('tls ca-cert-file');
   $self->{_tls_cert} = $config->returnValue('tls cert-file');
   $self->{_tls_key} = $config->returnValue('tls key-file');
@@ -349,12 +349,12 @@ sub setup {
         push(@conf_file, "useauthcontrolfile", "=", "$self->{_rd_authctrl}", "\n");
       }
       foreach my $rd_server(@rd_servers) {
-        $self->{_rd_srv_acctprt} = $config->returnValue("server users radius server $rd_server acct-port");
-        $self->{_rd_srv_authprt} = $config->returnValue("server users radius server $rd_server auth-port");
-        $self->{_rd_srv_name} = $config->returnValue("server users radius server $rd_server name");
-        $self->{_rd_srv_retry} = $config->returnValue("server users radius server $rd_server retry");
-        $self->{_rd_srv_wait} = $config->returnValue("server users radius server $rd_server wait");
-        $self->{_rd_srv_ss} = $config->returnValue("server users radius server $rd_server shared-secret");
+        $self->{_rd_srv_acctprt} = $config->returnValue("server authentication radius server $rd_server acct-port");
+        $self->{_rd_srv_authprt} = $config->returnValue("server authentication radius server $rd_server auth-port");
+        $self->{_rd_srv_name} = $config->returnValue("server authentication radius server $rd_server name");
+        $self->{_rd_srv_retry} = $config->returnValue("server authentication radius server $rd_server retry");
+        $self->{_rd_srv_wait} = $config->returnValue("server authentication radius server $rd_server wait");
+        $self->{_rd_srv_ss} = $config->returnValue("server authentication radius server $rd_server shared-secret");
         if (($self->{_rd_srv_acctprt}) || ($self->{_rd_srv_authprt}) || ($self->{_rd_srv_name}) || 
            ($self->{_rd_srv_retry}) || ($self->{_rd_srv_ss})|| ($self->{_rd_srv_wait})) {
           push(@conf_file, "\n", "server", "\n", "{", "\n");
@@ -995,7 +995,7 @@ sub get_command {
    push(@conf_file, "push dhcp-option DOMAIN $self->{_dns_suffix}\n");
  }
 
- my @user_auth = $config->listNodes('server users');
+ my @user_auth = $config->listNodes('server authentication');
  if ("ldap" ~~ @user_auth) {
    push(@conf_file, "plugin /usr/lib/openvpn/openvpn-auth-ldap.so $plugcnf_dir/ldap.conf\n");
  }
