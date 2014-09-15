@@ -14,5 +14,6 @@ Depends: perl,
  openvpn,
  openvpn-auth-ldap
  openvpn-auth-radius
+ openvpn-auth-sqlite
 Description: Vyatta OpenVPN configuration/operational commands
  Vyatta configuration/operational templates and scripts for OpenVPN
