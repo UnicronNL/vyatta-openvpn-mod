@@ -1,0 +1,7 @@
+tag:
+type: txt
+help: Username
+val_help: <username>; username
+
+end:
+        sudo /opt/vyatta/sbin/vyos-username-ovpn.pl --set_user --tun $VAR(../../../@) --username $VAR(@)
