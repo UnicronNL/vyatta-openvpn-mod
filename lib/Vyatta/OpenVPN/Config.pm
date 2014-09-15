@@ -245,12 +245,17 @@ sub setup {
   if (@user_auth) {
     system("mkdir -p $plugcnf_dir");
   }
-  foreach my $auth_opt(@user_auth) {
-    open (my $fh,">$plugcnf_dir/${auth_opt}.conf") or die("Can't open $plugcnf_dir/${auth_opt}.conf: $!\n");
-    print $fh "";
-    close $fh;
+  if (scalar(grep {defined $_} @user_auth) > 1) {
+    print ("Only one authentication option possible per tunnel\n");
+    exit 1;
   }
-
+  foreach my $auth_opt(@user_auth) {
+    if ($auth_opt eq "ldap" || $auth_opt eq "radius") {
+      open (my $fh,">$plugcnf_dir/${auth_opt}.conf") or die("Can't open $plugcnf_dir/${auth_opt}.conf: $!\n");
+      print $fh "";
+      close $fh;
+    }
+}
   foreach my $auth_opt(@user_auth) {
     if ($auth_opt eq "ldap") {
       push(@conf_file, "<LDAP>\n");
@@ -1001,6 +1006,9 @@ sub get_command {
  }
  if ("radius" ~~ @user_auth) {
    push(@conf_file, "plugin /usr/lib/openvpn/radiusplugin.so $plugcnf_dir/radius.conf\n");
+ }
+ if ("local" ~~ @user_auth) {
+   push(@conf_file, "plugin /usr/lib/openvpn/authsqlite.so $plugcnf_dir/users$self->{_intf}.db\n");
  }
  
  if (defined ($self->{_server_mclients})) {

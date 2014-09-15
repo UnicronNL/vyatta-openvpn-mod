@@ -32,33 +32,31 @@ use Vyatta::Interface;
 use strict;
 use warnings;
 
-my ($set_user, $userName, $tun);
+my ($set_user, $tun);
 
 sub usage {
-	print <<EOF;
+  print <<EOF;
 Usage:
-	$0 --set_user --tun <tunnel> --username <name>
+  $0 --set_user --tun <tunnel>
 EOF
-	exit 1;
+  exit 1;
 }
 
 sub configure_users {
-	my $config = new Vyatta::Config;
-	my $iftype = "interfaces openvpn";
-	my $passwdCommand = "/usr/bin/ovpnauth";
-	my $passwdDB = "/opt/vyatta/etc/openvpn/users${tun}.db";
-	
-	$config->setLevel("$iftype $tun server authentication local username");
-	my @users = $config->listNodes();
+  my $config = new Vyatta::Config;
+  my $iftype = "interfaces openvpn";
+  my $passwdCommand = "/usr/bin/ovpnauth";
+  my $passwdDB = "/opt/vyatta/etc/openvpn/plugin/users${tun}.db";
 
-	unlink $passwdDB;
+  $config->setLevel("$iftype $tun server authentication local username");
+  my @users = $config->listNodes();
 
-	foreach my $user(@users) {
-		my $password = $config->returnValue("$userName password");
-		system("sudo $passwdCommand -a -u $user -p $password $passwdDB >/dev/null  2>&1");
-	}
-	
-	exit 0;
+  unlink $passwdDB;
+  foreach my $user(@users) {
+    my $password = $config->returnValue("$user password");
+    system("sudo $passwdCommand -a -u $user -p $password $passwdDB >/dev/null  2>&1");
+  }
+  exit 0;
 }
 
 #
@@ -66,9 +64,8 @@ sub configure_users {
 #
 
 GetOptions (
-	"set_user"		=> \$set_user,
-	"username=s"		=> \$userName,
-	"tun=s"     		=> \$tun
+  "set_user"		=> \$set_user,
+  "tun=s"     		=> \$tun
 ) or usage ();
 
 configure_users() if $set_user;
