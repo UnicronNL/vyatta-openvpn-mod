@@ -1010,7 +1010,9 @@ sub get_command {
  if ("local" ~~ @user_auth) {
    push(@conf_file, "plugin /usr/lib/openvpn/authsqlite.so $plugcnf_dir/users$self->{_intf}.db\n");
  }
- 
+  if ("pam" ~~ @user_auth) {
+   push(@conf_file, "plugin /usr/lib/openvpn/openvpn-auth-pam.so login\n");
+ }
  if (defined ($self->{_server_mclients})) {
    return (undef, 'Maximum client connection cannot be set to 0 or less') 
      if ($self->{_server_mclients} <= 0);
