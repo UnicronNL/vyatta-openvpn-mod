@@ -1,1 +1,5 @@
 help: LDAP user authentication
+commit:expression: $VAR(./server-url/@@) != "" && \
+                   $VAR(./authorize/base-dn/@@) != "" && \
+                   $VAR(./authorize/search-filter/@@) != ""; \
+                   "At least \"server-url\", \"authorize base-dn\" and  authorize \"search-filte\"' must be configured for $VAR(.)"
