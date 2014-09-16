@@ -283,11 +283,15 @@ sub setup {
       if ($self->{_ldap_clientcert}) {
         push(@conf_file, "\t", "TLSCertFile", "\t", "$self->{_ldap_clientcert}", "\n");
       }
-      if ($self->{_ldap_entls} eq "true") {
-        push(@conf_file, "\t", "TLSEnable", "\t", "yes", "\n");
+      if ($self->{_ldap_entls}) {
+        if ($self->{_ldap_entls} eq "true") {
+          push(@conf_file, "\t", "TLSEnable", "\t", "yes", "\n");
+        }
       }
-      if ($self->{_ldap_folref} eq "true") {
-        push(@conf_file, "\t", "FollowReferrals", "\t", "yes", "\n");
+      if ($self->{_ldap_folref}) {
+        if ($self->{_ldap_folref} eq "true") {
+          push(@conf_file, "\t", "FollowReferrals", "\t", "yes", "\n");
+        }
       }
       if ($self->{_ldap_nettime}) {
         push(@conf_file, "\t", "Timeout", "\t", "$self->{_ldap_nettime}", "\n");
@@ -557,6 +561,39 @@ sub isRestartNeeded {
   return 1 if ($this->{_mode} ne $that->{_mode});
   return 1 if ($this->{_server_subnet} ne $that->{_server_subnet});
   return 1 if ($this->{_server_def} ne $that->{_server_def});
+  return 1 if ($this->{_ldap_binddn} ne $that->{_ldap_binddn});
+  return 1 if ($this->{_ldap_bindpass} ne $that->{_ldap_bindpass});
+  return 1 if ($this->{_ldap_url} ne $that->{_ldap_url});
+  return 1 if ($this->{_ldap_cacertdir} ne $that->{_ldap_cacertdir});
+  return 1 if ($this->{_ldap_cacertfile} ne $that->{_ldap_cacertfile});
+  return 1 if ($this->{_ldap_ciphersuite} ne $that->{_ldap_ciphersuite});
+  return 1 if ($this->{_ldap_clientkey} ne $that->{_ldap_clientkey});
+  return 1 if ($this->{_ldap_clientcert} ne $that->{_ldap_clientcert});
+  return 1 if ($this->{_ldap_entls} ne $that->{_ldap_entls});
+  return 1 if ($this->{_ldap_folref} ne $that->{_ldap_folref});
+  return 1 if ($this->{_ldap_nettime} ne $that->{_ldap_nettime});
+  return 1 if ($this->{_auth_basedn} ne $that->{_auth_basedn});
+  return 1 if ($this->{_auth_seflt} ne $that->{_auth_seflt});
+  return 1 if ($this->{_auth_usegrp} ne $that->{_auth_usegrp});
+  return 1 if ($this->{_grp_basedn} ne $that->{_grp_basedn});
+  return 1 if ($this->{_grp_memattr} ne $that->{_grp_memattr});
+  return 1 if ($this->{_grp_seflt} ne $that->{_grp_seflt});
+  return 1 if ($this->{_rd_authctrl} ne $that->{_rd_authctrl});
+  return 1 if ($this->{_rd_frmdprot} ne $that->{_rd_frmdprot});
+  return 1 if ($this->{_rd_nas_ip} ne $that->{_rd_nas_ip});
+  return 1 if ($this->{_rd_nas_id} ne $that->{_rd_nas_id});
+  return 1 if ($this->{_rd_nas_prttype} ne $that->{_rd_nas_prttype});
+  return 1 if ($this->{_rd_overwcfg} ne $that->{_rd_overwcfg});
+  return 1 if ($this->{_rd_srv} ne $that->{_rd_srv});
+  return 1 if ($this->{_rd_srv_acctprt} ne $that->{_rd_srv_acctprt});
+  return 1 if ($this->{_rd_srv_authprt} ne $that->{_rd_srv_authprt});
+  return 1 if ($this->{_rd_srv_name} ne $that->{_rd_srv_name});
+  return 1 if ($this->{_rd_srv_retry} ne $that->{_rd_srv_retry});
+  return 1 if ($this->{_rd_srv_ss} ne $that->{_rd_srv_ss});
+  return 1 if ($this->{_rd_srv_wait} ne $that->{_rd_srv_wait});
+  return 1 if ($this->{_rd_servtype} ne $that->{_rd_servtype});
+  return 1 if ($this->{_rd_to_sub} ne $that->{_rd_to_sub});
+  return 1 if ($this->{_rd_to_p2p} ne $that->{_rd_to_p2p});
   return 1 if ($this->{_tls_ca} ne $that->{_tls_ca});
   return 1 if ($this->{_tls_cert} ne $that->{_tls_cert});
   return 1 if ($this->{_tls_key} ne $that->{_tls_key});
@@ -606,6 +643,39 @@ sub isDifferentFrom {
   return 1 if ($this->{_mode} ne $that->{_mode});
   return 1 if ($this->{_server_subnet} ne $that->{_server_subnet});
   return 1 if ($this->{_server_def} ne $that->{_server_def});
+  return 1 if ($this->{_ldap_binddn} ne $that->{_ldap_binddn});
+  return 1 if ($this->{_ldap_bindpass} ne $that->{_ldap_bindpass});
+  return 1 if ($this->{_ldap_url} ne $that->{_ldap_url});
+  return 1 if ($this->{_ldap_cacertdir} ne $that->{_ldap_cacertdir});
+  return 1 if ($this->{_ldap_cacertfile} ne $that->{_ldap_cacertfile});
+  return 1 if ($this->{_ldap_ciphersuite} ne $that->{_ldap_ciphersuite});
+  return 1 if ($this->{_ldap_clientkey} ne $that->{_ldap_clientkey});
+  return 1 if ($this->{_ldap_clientcert} ne $that->{_ldap_clientcert});
+  return 1 if ($this->{_ldap_entls} ne $that->{_ldap_entls});
+  return 1 if ($this->{_ldap_folref} ne $that->{_ldap_folref});
+  return 1 if ($this->{_ldap_nettime} ne $that->{_ldap_nettime});
+  return 1 if ($this->{_auth_basedn} ne $that->{_auth_basedn});
+  return 1 if ($this->{_auth_seflt} ne $that->{_auth_seflt});
+  return 1 if ($this->{_auth_usegrp} ne $that->{_auth_usegrp});
+  return 1 if ($this->{_grp_basedn} ne $that->{_grp_basedn});
+  return 1 if ($this->{_grp_memattr} ne $that->{_grp_memattr});
+  return 1 if ($this->{_grp_seflt} ne $that->{_grp_seflt});
+  return 1 if ($this->{_rd_authctrl} ne $that->{_rd_authctrl});
+  return 1 if ($this->{_rd_frmdprot} ne $that->{_rd_frmdprot});
+  return 1 if ($this->{_rd_nas_ip} ne $that->{_rd_nas_ip});
+  return 1 if ($this->{_rd_nas_id} ne $that->{_rd_nas_id});
+  return 1 if ($this->{_rd_nas_prttype} ne $that->{_rd_nas_prttype});
+  return 1 if ($this->{_rd_overwcfg} ne $that->{_rd_overwcfg});
+  return 1 if ($this->{_rd_srv} ne $that->{_rd_srv});
+  return 1 if ($this->{_rd_srv_acctprt} ne $that->{_rd_srv_acctprt});
+  return 1 if ($this->{_rd_srv_authprt} ne $that->{_rd_srv_authprt});
+  return 1 if ($this->{_rd_srv_name} ne $that->{_rd_srv_name});
+  return 1 if ($this->{_rd_srv_retry} ne $that->{_rd_srv_retry});
+  return 1 if ($this->{_rd_srv_ss} ne $that->{_rd_srv_ss});
+  return 1 if ($this->{_rd_srv_wait} ne $that->{_rd_srv_wait});
+  return 1 if ($this->{_rd_servtype} ne $that->{_rd_servtype});
+  return 1 if ($this->{_rd_to_sub} ne $that->{_rd_to_sub});
+  return 1 if ($this->{_rd_to_p2p} ne $that->{_rd_to_p2p});
   return 1 if ($this->{_tls_ca} ne $that->{_tls_ca});
   return 1 if ($this->{_tls_cert} ne $that->{_tls_cert});
   return 1 if ($this->{_tls_key} ne $that->{_tls_key});
