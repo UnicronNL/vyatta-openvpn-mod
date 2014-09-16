@@ -2,6 +2,8 @@ tag:
 type: txt
 help: Username
 val_help: <username>; username
+commit:expression: $VAR(./password/@@) != ""; \
+                   "\"password\" must be configured for $VAR(.) $VAR(@)"
 
 end:
         sudo /opt/vyatta/sbin/vyos-username-ovpn.pl --set_user --tun $VAR(../../../../@)
