@@ -33,6 +33,7 @@ use strict;
 use warnings;
 
 my ($set_user, $tun);
+my ($pid, $exists) = undef;
 
 sub usage {
   print <<EOF;
@@ -47,6 +48,12 @@ sub configure_users {
   my $iftype = "interfaces openvpn";
   my $passwdCommand = "/usr/bin/ovpnauth";
   my $passwdDB = "/opt/vyatta/etc/openvpn/plugin/users${tun}.db";
+  my $pidfile = "/var/run/openvpn-${tun}.pid";
+
+  if (-e $pidfile) {
+    $pid= `cat $pidfile`;
+    $exists = kill 0, $pid;
+  }
 
   $config->setLevel("$iftype $tun server authentication local username");
   my @users = $config->listNodes();
@@ -56,6 +63,7 @@ sub configure_users {
     my $password = $config->returnValue("$user password");
     system("sudo $passwdCommand -a -u $user -p $password $passwdDB >/dev/null  2>&1");
   }
+  system("sudo kill -HUP $pid") if ( $exists );
   exit 0;
 }
 
