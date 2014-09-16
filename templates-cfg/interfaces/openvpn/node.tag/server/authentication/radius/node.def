@@ -1,1 +1,3 @@
 help: Radius user authentication
+commit:expression: $VAR(./server/@@) != ""; \
+                   "At least one \"server\" must be configured for $VAR(.)"
