@@ -55,6 +55,7 @@ my %fields = (
   _push_route    => [],
   _client_route  => [],
   _server_mclients  => undef,
+  _server_auth   => [],
   _laddr_subnet	 => undef,
   _device_type	 => undef,
   _client_disable  => [],
@@ -135,6 +136,7 @@ sub setup {
   $self->{_server_subnet} = $config->returnValue('server subnet');
   $self->{_server_def} = (defined($self->{_server_subnet})) ? 1 : undef;
   my @user_auth = $config->listNodes('server authentication');
+  $self->{_server_auth} = \@user_auth;
   $self->{_ldap_binddn} = $config->returnValue('server authentication ldap bind-dn');
   $self->{_ldap_bindpass} = $config->returnValue('server authentication ldap bind-pass');
   $self->{_ldap_url} = $config->returnValue('server authentication ldap server-url');
@@ -561,6 +563,7 @@ sub isRestartNeeded {
   return 1 if ($this->{_mode} ne $that->{_mode});
   return 1 if ($this->{_server_subnet} ne $that->{_server_subnet});
   return 1 if ($this->{_server_def} ne $that->{_server_def});
+  return 1 if (listsDiff($this->{_server_auth}, $that->{_server_auth}));
   return 1 if ($this->{_ldap_binddn} ne $that->{_ldap_binddn});
   return 1 if ($this->{_ldap_bindpass} ne $that->{_ldap_bindpass});
   return 1 if ($this->{_ldap_url} ne $that->{_ldap_url});
@@ -643,6 +646,7 @@ sub isDifferentFrom {
   return 1 if ($this->{_mode} ne $that->{_mode});
   return 1 if ($this->{_server_subnet} ne $that->{_server_subnet});
   return 1 if ($this->{_server_def} ne $that->{_server_def});
+  return 1 if (listsDiff($this->{_server_auth}, $that->{_server_auth}));
   return 1 if ($this->{_ldap_binddn} ne $that->{_ldap_binddn});
   return 1 if ($this->{_ldap_bindpass} ne $that->{_ldap_bindpass});
   return 1 if ($this->{_ldap_url} ne $that->{_ldap_url});
