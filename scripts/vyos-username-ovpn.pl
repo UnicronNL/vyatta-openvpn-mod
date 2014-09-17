@@ -32,7 +32,7 @@ use Vyatta::Interface;
 use strict;
 use warnings;
 
-my ($set_user, $tun);
+my ($set_user, $user_cn, $tun);
 my ($pid, $exists) = undef;
 
 sub usage {
@@ -41,6 +41,13 @@ Usage:
   $0 --set_user --tun <tunnel>
 EOF
   exit 1;
+}
+
+sub user_cn {
+  $username = $ENV{'username'};
+  $common_name = $ENV{'common_name'};
+
+  exit !(length($username) > 0 && length($common_name) > 0 && $username eq $common_name);
 }
 
 sub configure_users {
@@ -73,9 +80,10 @@ sub configure_users {
 
 GetOptions (
   "set_user"		=> \$set_user,
+  "user_cn"		=> \$user_cn,
   "tun=s"     		=> \$tun
 ) or usage ();
 
 configure_users() if $set_user;
-
+user_cn() if $user_cn;
 # end of file
