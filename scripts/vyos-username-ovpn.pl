@@ -44,8 +44,8 @@ EOF
 }
 
 sub user_cn {
-  $username = $ENV{'username'};
-  $common_name = $ENV{'common_name'};
+  my $username = $ENV{'username'};
+  my $common_name = $ENV{'common_name'};
 
   exit !(length($username) > 0 && length($common_name) > 0 && $username eq $common_name);
 }
@@ -54,7 +54,9 @@ sub configure_users {
   my $config = new Vyatta::Config;
   my $iftype = "interfaces openvpn";
   my $passwdCommand = "/usr/bin/ovpnauth";
+  my $htPasswdCommand = "/usr/bin/htpasswd";
   my $passwdDB = "/opt/vyatta/etc/openvpn/plugin/users${tun}.db";
+  my $htPasswdFile = "/opt/vyatta/etc/openvpn/plugin/.htpasswd${tun}";
   my $pidfile = "/var/run/openvpn-${tun}.pid";
 
   if (-e $pidfile) {
@@ -66,9 +68,12 @@ sub configure_users {
   my @users = $config->listNodes();
 
   unlink $passwdDB;
+  unlink $htPasswdFile;
+  system("sudo touch $htPasswdFile >/dev/null  2>&1");
   foreach my $user(@users) {
     my $password = $config->returnValue("$user password");
     system("sudo $passwdCommand -a -u $user -p $password $passwdDB >/dev/null  2>&1");
+    system("sudo $htPasswdCommand -m -b $htPasswdFile $user $password >/dev/null  2>&1");
   }
   system("sudo kill -HUP $pid") if ( $exists );
   exit 0;
