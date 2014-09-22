@@ -1,0 +1,21 @@
+help: Enable/disable the openvpn client web
+
+update: if [ ! -f /etc/lighttpd/server$VAR(../../@).pem ]; then
+          sudo openssl req -new -x509 -keyout /etc/lighttpd/server$VAR(../../@).pem \
+                -out /etc/lighttpd/server$VAR(../../@).pem \
+                -days 3650 -nodes -passout pass:'' \
+                -subj '/C=US/CN=VyOs openvpn client web/O=VyOs/ST=ZH/L=Reeuwijk'
+        fi
+        if [ ! `cat /etc/php5/cgi/php.ini | grep '^cgi\.fix_pathinfo=1$'` ]; then
+          sudo echo "cgi.fix_pathinfo=1" >> /etc/php5/cgi/php.ini
+        fi
+
+
+end:  sudo /opt/vyatta/sbin/vyos-username-ovpn.pl --set_web --tun $VAR(../../@)
+
+#      if [[ ${COMMIT_ACTION} = 'DELETE' ]]; then
+#        sudo /usr/sbin/invoke-rc.d lighttpd stop
+#      else
+#         sudo /usr/sbin/invoke-rc.d lighttpd restart
+#      fi
+

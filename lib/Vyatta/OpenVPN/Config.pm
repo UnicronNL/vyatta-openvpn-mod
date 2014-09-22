@@ -308,7 +308,7 @@ sub setup {
           push(@conf_file, "\t", "SearchFilter", "\t", "\"", "$self->{_auth_seflt}", "\"", "\n");
         }
         if ($self->{_auth_usegrp}) {
-          push(@conf_file, "\t", "RequireGroup", "\t", "$self->{_ldap_nettime}", "\n");
+          push(@conf_file, "\t", "RequireGroup", "\t", "$self->{_auth_usegrp}", "\n");
         }
         if (($self->{_grp_basedn}) || ($self->{_grp_memattr}) || ($self->{_grp_seflt})) {
           push(@conf_file, "<Group>\n");
