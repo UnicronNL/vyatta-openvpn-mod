@@ -981,7 +981,7 @@ sub get_command {
     unless (-e "${authdir}/pki/private/ca.key") {
       system("$easyrsavar $easyrsapkivar $easyrsaexec --batch build-ca nopass");
     }
-    unless (-e "${authdir}/pki/private/server-$self->{_intf}") {    
+    unless (-e "${authdir}/pki/private/server-$self->{_intf}.key") {    
       system("$easyrsavar $easyrsapkivar $easyrsaexec build-server-full server-$self->{_intf} nopass");
     }  
     unless (-e "${authdir}/pki/dh.pem") {
