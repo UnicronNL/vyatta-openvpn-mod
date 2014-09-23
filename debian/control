@@ -14,11 +14,11 @@ Depends: perl,
  openvpn,
  openvpn-auth-ldap,
  openvpn-auth-radius,
- openvpn-auth-sqlite'
- php5-common'
- php5-cgi'
- php5-auth-pam'
- php5-radius'
+ openvpn-auth-sqlite,
+ php5-common,
+ php5-cgi,
+ php5-auth-pam,
+ php5-radius,
  php5-ldap
 Description: Vyatta OpenVPN configuration/operational commands
  Vyatta configuration/operational templates and scripts for OpenVPN

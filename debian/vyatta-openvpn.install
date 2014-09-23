@@ -7,7 +7,7 @@ web/radius.php var/www/ovpn-client-web/include
 web/stylesheet.css var/www/ovpn-client-web/include
 easy-rsa/easyrsa etc/openvpn/easy-rsa
 easy-rsa/openssl-1.0.cnf etc/openvpn/easy-rsa
-easy-rsa/x509-types\COMMON etc/openvpn/easy-rsa/x509-types
-easy-rsa/x509-types\ca etc/openvpn/easy-rsa/x509-types
-easy-rsa/x509-types\client etc/openvpn/easy-rsa/x509-types
-easy-rsa/x509-types\server etc/openvpn/easy-rsa/x509-types
+easy-rsa/x509-types/COMMON etc/openvpn/easy-rsa/x509-types
+easy-rsa/x509-types/ca etc/openvpn/easy-rsa/x509-types
+easy-rsa/x509-types/client etc/openvpn/easy-rsa/x509-types
+easy-rsa/x509-types/server etc/openvpn/easy-rsa/x509-types
