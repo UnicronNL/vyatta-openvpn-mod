@@ -5,12 +5,12 @@ bin_sudo_usersdir = $(bindir)/sudo-users
 
 sbin_SCRIPTS = scripts/vyatta-update-ovpn.pl
 sbin_SCRIPTS += scripts/vyatta-qos-up
+sbin_SCRIPTS += scripts/vyos-username-ovpn.pl
 
 share_perl5_DATA = lib/Vyatta/OpenVPN/Config.pm
 bin_sudo_users_SCRIPTS = scripts/vyatta-show-ovpn.pl
 bin_sudo_users_SCRIPTS += scripts/vyatta-restart-ovpn.pl
 bin_sudo_users_SCRIPTS += scripts/vyatta-reset-client-ovpn.pl
-bin_sudo_users_SCRIPTS += scripts/vyos-username-ovpn.pl
 
 cpiop = find  . ! -regex '\(.*~\|.*\.bak\|.*\.swp\|.*\#.*\#\)' -print0 | \
   cpio -0pd
