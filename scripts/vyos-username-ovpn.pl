@@ -103,10 +103,20 @@ sub configure_web {
 
   my @addrs = $config->returnValues("listen-address");
   my $port = $config->returnValue("port");
- 
-  push(@conf_file, "server.bind = \"localhost\"", "\n");
-  foreach my $addr (@addrs) {
-    if ($addr =~ /:/) {
+  
+  my $x = 1;
+  foreach my $addr(@addrs) {
+    if (($addr =~ /:/) && ($x == 1)) {
+      push(@conf_file, "server.bind = \"[$addr]\"", "\n");
+      push(@conf_file, "server.port = \"$port\"", "\n");
+      ++$x;
+    }
+    elsif ($x == 1) {
+      push(@conf_file, "server.bind = \"$addr\"", "\n");
+      push(@conf_file, "server.port = \"$port\"", "\n");
+      ++$x;
+    }
+    elsif ($addr =~ /:/) {
       push(@conf_file, "\$SERVER[\"socket\"] == \"[$addr]:$port\" {\n");
       push(@conf_file, "ssl.engine = \"enable\"", "\n");
       push(@conf_file, "ssl.pemfile = \"/etc/lighttpd/server${tun}.pem\"}", "\n");
@@ -114,13 +124,16 @@ sub configure_web {
     else {
       push(@conf_file, "\$SERVER[\"socket\"] == \"$addr:$port\" {\n");
       push(@conf_file, "ssl.engine = \"enable\"", "\n");
-      push(@conf_file, "ssl.pemfile = \"/etc/lighttpd/server${tun}.pem\"}", "\n");    }
+      push(@conf_file, "ssl.pemfile = \"/etc/lighttpd/server${tun}.pem\"}", "\n");
+    }
   }
+  push(@conf_file, "ssl.engine = \"enable\"", "\n");
+  push(@conf_file, "ssl.pemfile = \"/etc/lighttpd/server${tun}.pem\"", "\n");
   push(@conf_file, "server.modules = (\"mod_cgi\", \"mod_fastcgi\", \"mod_alias\", \"mod_accesslog\")", "\n");
   push(@conf_file, "server.document-root = \"/var/www/ovpn-client-web/\"", "\n");
-  push(@conf_file, "server.errorlog = \"/var/log/ovpn${tun}web-error.log\"", "\n");
-  push(@conf_file, "server.breakagelog = \"/var/log/ovpn${tun}web-error.log\"", "\n");
-  push(@conf_file, "accesslog.filename = \"/var/log/ovpn${tun}web-access.log\"", "\n");
+  push(@conf_file, "server.errorlog = \"/var/log/lighttpd/ovpn${tun}web-error.log\"", "\n");
+  push(@conf_file, "server.breakagelog = \"/var/log/lighttpd/ovpn${tun}web-error.log\"", "\n");
+  push(@conf_file, "accesslog.filename = \"/var/log/lighttpd/ovpn${tun}web-access.log\"", "\n");
   push(@conf_file, "cgi.assign = (\".pl\" => \"/usr/bin/perl\")", "\n");
   push(@conf_file, "index-file.names = (\"index${tun}.php\")", "\n");
   if ($config->exists("alias-url")) {

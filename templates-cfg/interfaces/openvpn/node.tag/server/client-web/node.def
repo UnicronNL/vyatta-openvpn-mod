@@ -9,13 +9,14 @@ update: if [ ! -f /etc/lighttpd/server$VAR(../../@).pem ]; then
         if [ ! `cat /etc/php5/cgi/php.ini | grep '^cgi\.fix_pathinfo=1$'` ]; then
           sudo echo "cgi.fix_pathinfo=1" >> /etc/php5/cgi/php.ini
         fi
+        sudo /opt/vyatta/sbin/vyos-username-ovpn.pl --set_web --tun $VAR(../../@)
+        if [ `pgrep -f '^/usr/sbin/lighttpd -f /etc/lighttpd/lighttp$VAR(../../@).conf'` ]; then
+           PGREP=`pgrep -f '^/usr/sbin/lighttpd -f /etc/lighttpd/lighttp$VAR(../../@).conf'`
+           sudo kill $PGREP
+        fi
+        sudo su -c "/usr/sbin/lighttpd -f /etc/lighttpd/lighttpvtun0.conf" www-data
 
-
-end:  sudo /opt/vyatta/sbin/vyos-username-ovpn.pl --set_web --tun $VAR(../../@)
-
-#      if [[ ${COMMIT_ACTION} = 'DELETE' ]]; then
-#        sudo /usr/sbin/invoke-rc.d lighttpd stop
-#      else
-#         sudo /usr/sbin/invoke-rc.d lighttpd restart
-#      fi
-
+delete: if [ `pgrep -f '^/usr/sbin/lighttpd -f /etc/lighttpd/lighttp$VAR(../../@).conf'` ]; then
+          PGREP=`pgrep -f '^/usr/sbin/lighttpd -f /etc/lighttpd/lighttp$VAR(../../@).conf'`
+          sudo kill $PGREP
+        fi

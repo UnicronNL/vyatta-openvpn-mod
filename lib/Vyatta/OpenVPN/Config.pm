@@ -28,6 +28,7 @@ my %fields = (
   _mode          => undef,
   _server_def    => undef,
   _server_subnet => undef,
+  _tls_auto      => undef,
   _tls_def       => undef,
   _tls_ca        => undef,
   _tls_cert      => undef,
@@ -164,6 +165,7 @@ sub setup {
   $self->{_rd_servtype} = $config->returnValue('server authentication radius service-type');
   $self->{_rd_to_sub} = $config->returnValue('server authentication radius topology p2p');
   $self->{_rd_to_p2p} = $config->returnValue('server authentication radius topology subnet');
+  if ( $config->exists('tls auto') ) { $self->{_tls_auto} = 1; }
   $self->{_tls_ca} = $config->returnValue('tls ca-cert-file');
   $self->{_tls_cert} = $config->returnValue('tls cert-file');
   $self->{_tls_key} = $config->returnValue('tls key-file');
@@ -597,6 +599,7 @@ sub isRestartNeeded {
   return 1 if ($this->{_rd_servtype} ne $that->{_rd_servtype});
   return 1 if ($this->{_rd_to_sub} ne $that->{_rd_to_sub});
   return 1 if ($this->{_rd_to_p2p} ne $that->{_rd_to_p2p});
+  return 1 if ($this->{_tls_auto} ne $that->{_tls_auto});
   return 1 if ($this->{_tls_ca} ne $that->{_tls_ca});
   return 1 if ($this->{_tls_cert} ne $that->{_tls_cert});
   return 1 if ($this->{_tls_key} ne $that->{_tls_key});
@@ -680,6 +683,7 @@ sub isDifferentFrom {
   return 1 if ($this->{_rd_servtype} ne $that->{_rd_servtype});
   return 1 if ($this->{_rd_to_sub} ne $that->{_rd_to_sub});
   return 1 if ($this->{_rd_to_p2p} ne $that->{_rd_to_p2p});
+  return 1 if ($this->{_tls_auto} ne $that->{_tls_auto});
   return 1 if ($this->{_tls_ca} ne $that->{_tls_ca});
   return 1 if ($this->{_tls_cert} ne $that->{_tls_cert});
   return 1 if ($this->{_tls_key} ne $that->{_tls_key});
@@ -951,14 +955,43 @@ sub get_command {
 
   # secret & tls
   return (undef, 'Must specify one of "shared-secret-key-file" and "tls"')
-    if (!defined($self->{_secret_file}) && !defined($self->{_tls_def}));
+    if (!defined($self->{_secret_file}) && !defined($self->{_tls_def}) && !defined($self->{_tls_auto}));
   return (undef, 'Can only specify one of "shared-secret-key-file" '
                  . 'and "tls"')
     if (defined($self->{_secret_file}) && defined($self->{_tls_def}));
-  return (undef, 'Must specify "tls" in client-server mode')
-    if (($client || $server) && !defined($self->{_tls_def}));
+  return (undef, 'Can only specify one of "tls auto" '
+                 . 'and "tls"')
+    if (defined($self->{_tls_auto}) && defined($self->{_tls_def}));
+  return (undef, 'Must specify "tls auto" or "tls" in client-server mode')
+    if (($client || $server) && !defined($self->{_tls_def}) && !defined($self->{_tls_auto}));
 
   # tls
+  my $easyrsavar    = "EASYRSA=/etc/openvpn/easy-rsa";
+  my $easyrsapkivar = "EASYRSA_PKI=/config/auth/$self->{_intf}/pki";
+  my $easyrsaexec   = "/etc/openvpn/easy-rsa/easyrsa";
+  my $authdir        = "/config/auth/$self->{_intf}";
+  
+  if (defined($self->{_tls_auto})) {
+	unless (-e "${authdir}") {
+      system("mkdir -p ${authdir}");
+    }
+    unless (-d "${authdir}/pki") {
+      system("$easyrsavar $easyrsapkivar $easyrsaexec init-pki");
+    }
+    unless (-e "${authdir}/pki/private/ca.key") {
+      system("$easyrsavar $easyrsapkivar $easyrsaexec --batch build-ca nopass");
+    }
+    unless (-e "${authdir}/pki/private/server-$self->{_intf}") {    
+      system("$easyrsavar $easyrsapkivar $easyrsaexec build-server-full server-$self->{_intf} nopass");
+    }  
+    unless (-e "${authdir}/pki/dh.pem") {
+      system("$easyrsavar $easyrsapkivar $easyrsaexec gen-dh");
+    }
+    push(@conf_file, "ca $authdir/pki/ca.crt\n");
+    push(@conf_file, "cert $authdir/pki/issued/server-$self->{_intf}.crt\n");
+    push(@conf_file, "key $authdir/pki/private/server-$self->{_intf}.key\n");
+    push(@conf_file, "dh $authdir/pki/dh.pem\n");
+  }
   if (defined($self->{_tls_def})) {
     return (undef, 'Must specify "tls ca-cert-file"')
       if (!defined($self->{_tls_ca}));
