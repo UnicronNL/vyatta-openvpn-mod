@@ -2,6 +2,7 @@
 function radius($radarray, $radservers) {
   require_once('radius.class.php');
 
+  $tunnel        = $radarray[0];
   $username      = $radarray[1];
   $password      = $radarray[2];
   $radframedprt  = $radarray[3];
@@ -27,6 +28,7 @@ function radius($radarray, $radservers) {
       if ($radius->AccessRequest($username, $password)) {
         echo "RADIUS <br />";
         echo "You are authenticated! <br />";
+        include 'include/linkgen.php';
       }
       else {
         echo "RADIUS <br />";

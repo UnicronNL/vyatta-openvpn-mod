@@ -1,6 +1,7 @@
 <?php
 function local($localarray) {
 
+  $tunnel   = $localarray[0];
   $username = $localarray[1];
   $password = $localarray[2];
   $htpasswd = $localarray[3];
@@ -42,6 +43,7 @@ function local($localarray) {
     if (($username == $part[0]) && ($hashedpasswd == $part[1])) {
       echo "LOCAL <br>";
       echo "You are authenticated! <br>";
+      include 'include/linkgen.php';
     }
     else {
       echo "LOCAL <br>";

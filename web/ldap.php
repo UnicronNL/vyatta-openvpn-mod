@@ -1,6 +1,7 @@
 <?php
   function ldap($ldaparray){
 
+  $tunnel          = $ldaparray[0];
   $username        = $ldaparray[1];
   $password        = $ldaparray[2];
   $ldapurl         = $ldaparray[3];
@@ -40,6 +41,7 @@
       if ($ldapbinduser) {
         echo "LDAP <br>";
         echo "You are authenticated! <br>";
+        include 'include/linkgen.php';
       }
       else {
         echo "LDAP <br>";

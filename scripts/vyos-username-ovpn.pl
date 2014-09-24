@@ -32,7 +32,7 @@ use Vyatta::Interface;
 use strict;
 use warnings;
 
-my ($set_user, $set_web, $user_cn, $tun);
+my ($set_user, $set_web, $user_cn, $genovpn, $tun, $phpuser);
 my ($pid, $exists) = undef;
 my $iftype = "interfaces openvpn";
   
@@ -42,6 +42,77 @@ Usage:
   $0 --set_user --tun <tunnel>
 EOF
   exit 1;
+}
+
+sub gen_ovpn {
+  my $config = new Vyatta::Config;
+  my @conf_file = ();
+  my $easyrsavar    = "EASYRSA=/etc/openvpn/easy-rsa";
+  my $easyrsapkivar = "EASYRSA_PKI=/config/auth/${tun}/pki";
+  my $easyrsaexec   = "/etc/openvpn/easy-rsa/easyrsa";
+  my $authdir        = "/config/auth/${tun}";
+  
+  $config->setLevel("$iftype $tun");
+  
+  unless (-e "${authdir}/pki/private/${phpuser}.key") { 
+    system("sudo $easyrsavar $easyrsapkivar $easyrsaexec build-client-full $phpuser nopass");
+  }
+
+  my @ca = do {
+    open my $fh, "<$authdir/pki/ca.crt"
+        or die "could not open $authdir/pki/ca.crt: $!";
+    <$fh>;
+  };
+  my @crt = do {
+    open my $fh, "<$authdir/pki/issued/${phpuser}.crt"
+        or die "could not open $authdir/pki/issued/${phpuser}.crt: $!";
+    <$fh>;
+  };
+  my @key = do {
+    open my $fh, "<$authdir/pki/private/${phpuser}.key"
+        or die "could not open $authdir/pki/private/${phpuser}.key: $!";
+    <$fh>;
+  };
+
+  unless (-e "${authdir}/${phpuser}.ovpn") {
+    open (my $fh,">${authdir}/${phpuser}.ovpn") or die("Can't open ${authdir}/${phpuser}.ovpn: $!\n");
+    print $fh "";
+    close $fh;
+    
+    push(@conf_file, 'client', "\n");
+    push(@conf_file, 'dev tun', "\n");
+    push(@conf_file, 'resolv-retry infinite', "\n");
+    push(@conf_file, 'nobind', "\n");
+    push(@conf_file, 'persist-key', "\n");
+    push(@conf_file, 'persist-tun', "\n");
+    push(@conf_file, 'ca [inline]', "\n");
+    push(@conf_file, 'cert [inline]', "\n");
+    push(@conf_file, 'key [inline]', "\n");
+    push(@conf_file, 'verb 3', "\n");
+    push(@conf_file, 'keepalive 10 900', "\n");
+    push(@conf_file, 'inactive 3600', "\n");
+    push(@conf_file, '<ca>', "\n");
+    foreach (@ca) {
+      push(@conf_file, "$_");
+    }
+    push(@conf_file, '</ca>', "\n");
+    push(@conf_file, '<cert>', "\n");
+    foreach (@crt) {
+      push(@conf_file, "$_");
+    }
+    push(@conf_file, '</cert>', "\n");
+    push(@conf_file, '<key>', "\n");
+    foreach (@key) {
+      push(@conf_file, "$_");
+    }
+    push(@conf_file, '</key>', "\n");
+
+    open ($fh,">${authdir}/${phpuser}.ovpn");
+    foreach (@conf_file) {
+      print $fh "$_";
+    }
+    close $fh;
+  }
 }
 
 sub user_cn {
@@ -181,6 +252,7 @@ sub configure_web {
   my @user_auth = $config->listNodes();
   foreach my $auth_opt(@user_auth) {
 	push(@conf_file, "  require '${auth_opt}.php';", "\n");
+	push(@conf_file, '  $tunnel = \'', $tun, "';", "\n");
     if ($auth_opt eq "ldap") {
       if ($config->exists("ldap server-url")) {
         push(@conf_file, '  $ldapurl = \'', $config->returnValue("ldap server-url"), "';", "\n"); 
@@ -289,6 +361,7 @@ sub configure_web {
         push(@conf_file, '  $ldapgrpseflt = " ";', "\n");
       }
       push(@conf_file, '  $ldaparray = array();', "\n");
+      push(@conf_file, '  $ldaparray[0] = $tunnel;', "\n");
       push(@conf_file, '  $ldaparray[1] = $username;', "\n");
       push(@conf_file, '  $ldaparray[2] = $password;', "\n");
       push(@conf_file, '  $ldaparray[3] = $ldapurl;', "\n");
@@ -341,6 +414,7 @@ sub configure_web {
 	    push(@conf_file, '  $radsrvtype = " ";', "\n");
       }
       push(@conf_file, '  $radarray = array();', "\n");
+      push(@conf_file, '  $radarray[0] = $tunnel;', "\n");
       push(@conf_file, '  $radarray[1] = $username;', "\n");
       push(@conf_file, '  $radarray[2] = $password;', "\n");
       push(@conf_file, '  $radarray[3] = $radframedprt;', "\n");
@@ -401,12 +475,14 @@ sub configure_web {
     }
     if ($auth_opt eq "local") {
       push(@conf_file, '  $localarray = array();', "\n");
+      push(@conf_file, '  $localarray[0] = $tunnel;', "\n");
       push(@conf_file, '  $localarray[1] = $username;', "\n");
       push(@conf_file, '  $localarray[2] = $password;', "\n");
       push(@conf_file, '  $localarray[3] = ', '"',"$htPasswdFile", '"', ";", "\n");
     }
     if ($auth_opt eq "pam") {
       push(@conf_file, '  $pamarray = array();', "\n");
+      push(@conf_file, '  $pamarray[0] = $tunnel;', "\n");
       push(@conf_file, '  $pamarray[1] = $username;', "\n");
       push(@conf_file, '  $pamarray[2] = $password;', "\n");
     }
@@ -446,10 +522,13 @@ GetOptions (
   "set_user" => \$set_user,
   "set_web"  => \$set_web,
   "user_cn"	 => \$user_cn,
-  "tun=s"    => \$tun
+  "genovpn"  => \$genovpn,
+  "tun=s"    => \$tun,
+  "phpuser=s"    => \$phpuser
 ) or usage ();
 
 configure_users() if $set_user;
 user_cn() if $user_cn;
+gen_ovpn() if $genovpn;
 configure_web() if $set_web;
 # end of file

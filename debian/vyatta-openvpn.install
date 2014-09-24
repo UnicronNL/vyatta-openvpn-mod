@@ -1,3 +1,5 @@
+web/download.php var/www/ovpn-client-web
+web/linkgen.php var/www/ovpn-client-web/include
 web/ldap.php var/www/ovpn-client-web/include
 web/local.php var/www/ovpn-client-web/include
 web/login.php var/www/ovpn-client-web/include
