@@ -249,10 +249,6 @@ sub setup {
   if (@user_auth) {
     system("mkdir -p $plugcnf_dir");
   }
-  if (scalar(grep {defined $_} @user_auth) > 1) {
-    print ("Only one authentication option possible per tunnel\n");
-    exit 1;
-  }
   foreach my $auth_opt(@user_auth) {
     if ($auth_opt eq "ldap" || $auth_opt eq "radius") {
       open (my $fh,">$plugcnf_dir/${auth_opt}.conf") or die("Can't open $plugcnf_dir/${auth_opt}.conf: $!\n");
