@@ -1,9 +1,10 @@
 <?php
   $file = $_POST['filename'];
+  $tunnel = $_POST['tunnel'];
+  $username = $_POST['username'];
   $target = "/config/auth/$tunnel/$username.ovpn";
-  $link = "/tmp/$username.ovpn";
-  
-  symlink($target, $link);
+
+  symlink($target, $file);
 
   header('Content-Description: File Transfer');
   header('Content-Type: application/application/x-openvpn-profile');
