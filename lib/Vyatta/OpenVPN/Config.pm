@@ -987,8 +987,6 @@ sub get_command {
     push(@conf_file, "cert $authdir/pki/issued/server-$self->{_intf}.crt\n");
     push(@conf_file, "key $authdir/pki/private/server-$self->{_intf}.key\n");
     push(@conf_file, "dh $authdir/pki/dh.pem\n");
-    push(@conf_file, "auth-user-pass \"/opt/vyatta/sbin/vyos-username-ovpn.pl\" via-env\n");
-    
   }
   if (defined($self->{_tls_def})) {
     return (undef, 'Must specify "tls ca-cert-file"')
@@ -1117,6 +1115,10 @@ sub get_command {
  }
   if ("pam" ~~ @user_auth) {
    push(@conf_file, "plugin /usr/lib/openvpn/openvpn-auth-pam.so login\n");
+ }
+ if (("ldap" ~~ @user_auth) || ("radius" ~~ @user_auth) || ("local" ~~ @user_auth) || ("pam" ~~ @user_auth)) {
+    push(@conf_file, "script-security 3\n");
+    push(@conf_file, "auth-user-pass-verify \"/opt/vyatta/sbin/vyos-username-ovpn.pl --user_cn\" via-env\n");
  }
  if (defined ($self->{_server_mclients})) {
    return (undef, 'Maximum client connection cannot be set to 0 or less') 
