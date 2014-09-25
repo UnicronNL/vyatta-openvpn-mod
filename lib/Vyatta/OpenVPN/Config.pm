@@ -255,7 +255,7 @@ sub setup {
       print $fh "";
       close $fh;
     }
-}
+  }
   foreach my $auth_opt(@user_auth) {
     if ($auth_opt eq "ldap") {
       push(@conf_file, "<LDAP>\n");

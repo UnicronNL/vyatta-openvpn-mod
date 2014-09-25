@@ -50,7 +50,7 @@ sub gen_ovpn {
   my $easyrsavar    = "EASYRSA=/etc/openvpn/easy-rsa";
   my $easyrsapkivar = "EASYRSA_PKI=/config/auth/${tun}/pki";
   my $easyrsaexec   = "/etc/openvpn/easy-rsa/easyrsa";
-  my $authdir        = "/config/auth/${tun}";
+  my $authdir       = "/config/auth/${tun}";
   
   $config->setLevel("$iftype $tun");
   
@@ -78,7 +78,7 @@ sub gen_ovpn {
     open (my $fh,">${authdir}/${phpuser}.ovpn") or die("Can't open ${authdir}/${phpuser}.ovpn: $!\n");
     print $fh "";
     close $fh;
-    
+
     push(@conf_file, 'client', "\n");
     push(@conf_file, 'dev tun', "\n");
     push(@conf_file, 'resolv-retry infinite', "\n");
@@ -112,6 +112,7 @@ sub gen_ovpn {
       print $fh "$_";
     }
     close $fh;
+    exit 0;
   }
 }
 
@@ -120,15 +121,16 @@ sub user_cn {
   my $common_name = $ENV{'common_name'};
 
   exit !(length($username) > 0 && length($common_name) > 0 && $username eq $common_name);
+  exit 0;
 }
 
 sub configure_users {
-  my $config = new Vyatta::Config;
-  my $passwdCommand = "/usr/bin/ovpnauth";
+  my $config          = new Vyatta::Config;
+  my $passwdCommand   = "/usr/bin/ovpnauth";
   my $htPasswdCommand = "/usr/bin/htpasswd";
-  my $htPasswdFile = "/opt/vyatta/etc/openvpn/plugin/.htpasswd${tun}";
-  my $passwdDB = "/opt/vyatta/etc/openvpn/plugin/users${tun}.db";
-  my $pidfile = "/var/run/openvpn-${tun}.pid";
+  my $htPasswdFile    = "/opt/vyatta/etc/openvpn/plugin/.htpasswd${tun}";
+  my $passwdDB        = "/opt/vyatta/etc/openvpn/plugin/users${tun}.db";
+  my $pidfile         = "/var/run/openvpn-${tun}.pid";
 
   if (-e $pidfile) {
     $pid= `cat $pidfile`;
@@ -198,21 +200,19 @@ sub configure_web {
       push(@conf_file, "ssl.pemfile = \"/etc/lighttpd/server${tun}.pem\"}", "\n");
     }
   }
+  push(@conf_file, "server.username = \"www-data\"", "\n");
+  push(@conf_file, "server.groupname = \"www-data\"", "\n");
   push(@conf_file, "ssl.engine = \"enable\"", "\n");
   push(@conf_file, "ssl.pemfile = \"/etc/lighttpd/server${tun}.pem\"", "\n");
-  push(@conf_file, "server.modules = (\"mod_cgi\", \"mod_fastcgi\", \"mod_alias\", \"mod_accesslog\")", "\n");
+  push(@conf_file, "server.modules = (\"mod_fastcgi\", \"mod_alias\", \"mod_accesslog\")", "\n");
   push(@conf_file, "server.document-root = \"/var/www/ovpn-client-web/\"", "\n");
   push(@conf_file, "server.errorlog = \"/var/log/lighttpd/ovpn${tun}web-error.log\"", "\n");
   push(@conf_file, "server.breakagelog = \"/var/log/lighttpd/ovpn${tun}web-error.log\"", "\n");
   push(@conf_file, "accesslog.filename = \"/var/log/lighttpd/ovpn${tun}web-access.log\"", "\n");
-  push(@conf_file, "cgi.assign = (\".pl\" => \"/usr/bin/perl\")", "\n");
   push(@conf_file, "index-file.names = (\"index${tun}.php\")", "\n");
   if ($config->exists("alias-url")) {
-	my $alias_url = $config->returnValue("alias-url");
-    push(@conf_file, "alias.url = (\"/cgi-bin/\" => \"/opt/vyatta/sbin/cgi/\", \"/$alias_url/\" => \"/var/www/ovpn-client-web/\")", "\n");
-  }
-  else {
-    push(@conf_file, "alias.url = (\"/cgi-bin/\" => \"/opt/vyatta/sbin/cgi/\")", "\n");
+    my $alias_url = $config->returnValue("alias-url");
+    push(@conf_file, "alias.url = (\"/$alias_url/\" => \"/var/www/ovpn-client-web/\")", "\n");
   }
   push(@conf_file, "mimetype.assign = (\".html\" => \"text/html\", \".gif\" => \"image/gif\", \".jpeg\" => \"image/jpeg\", \".jpg\" => \"image/jpeg\", \".png\" => \"image/png\", \".ico\" => \"image/x-icon\", \".css\" => \"text/css\", \".json\" => \"text/plain\", \".js\" => \"application/javascript\",)");
   push(@conf_file, "fastcgi.server = (\".php\" => (\"localhost\" => (\"socket\" => \"/var/run/php-fastcgi.socket\", \"bin-path\" => \"/usr/bin/php-cgi\")))", "\n");
@@ -251,108 +251,108 @@ sub configure_web {
   $config->setLevel("$iftype $tun server authentication");
   my @user_auth = $config->listNodes();
   foreach my $auth_opt(@user_auth) {
-	push(@conf_file, "  require '${auth_opt}.php';", "\n");
-	push(@conf_file, '  $tunnel = \'', $tun, "';", "\n");
+    push(@conf_file, "  require '${auth_opt}.php';", "\n");
+    push(@conf_file, '  $tunnel = \'', $tun, "';", "\n");
     if ($auth_opt eq "ldap") {
       if ($config->exists("ldap server-url")) {
         push(@conf_file, '  $ldapurl = \'', $config->returnValue("ldap server-url"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapurl = " ";', "\n");
+        push(@conf_file, '  $ldapurl = " ";', "\n");
       }
       if ($config->exists("ldap bind-dn")) {
         push(@conf_file, '  $ldapbinddn = \'', $config->returnValue("ldap bind-dn"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapbinddn = " ";', "\n");
+        push(@conf_file, '  $ldapbinddn = " ";', "\n");
       }
       if ($config->exists("ldap bind-pass")) {
         push(@conf_file, '  $ldapbindpass = \'', $config->returnValue("ldap bind-pass"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapbindpass = " ";', "\n");
+      push(@conf_file, '  $ldapbindpass = " ";', "\n");
       }
       if ($config->exists("ldap ca-cert-dir")) {
         push(@conf_file, '  $ldapcacertdir = \'', $config->returnValue("ldap ca-cert-dir"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapcacertdir = " ";', "\n");
+        push(@conf_file, '  $ldapcacertdir = " ";', "\n");
       }
       if ($config->exists("ldap ca-cert-file")) {
         push(@conf_file, '  $ldapcacertfile = \'', $config->returnValue("ldap ca-cert-file"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapcacertfile = " ";', "\n");
+      push(@conf_file, '  $ldapcacertfile = " ";', "\n");
       }
       if ($config->exists("ldap cipher-suite")) {
         push(@conf_file, '  $ldapciphersuite = \'', $config->returnValue("ldap cipher-suite"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapciphersuite = " ";', "\n");
+        push(@conf_file, '  $ldapciphersuite = " ";', "\n");
       }
       if ($config->exists("ldap client-key")) {
         push(@conf_file, '  $ldapclientkey = \'', $config->returnValue("ldap client-key"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapclientkey = " ";', "\n");
+      push(@conf_file, '  $ldapclientkey = " ";', "\n");
       }
       if ($config->exists("ldap client-cert")) {
         push(@conf_file, '  $ldapclientcert = \'', $config->returnValue("ldap client-cert"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapclientcert = " ";', "\n");
+        push(@conf_file, '  $ldapclientcert = " ";', "\n");
       }
       if ($config->exists("ldap enable-tls")) {
         push(@conf_file, '  $ldapentls = \'', $config->returnValue("ldap enable-tls"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapentls = " ";', "\n");
+        push(@conf_file, '  $ldapentls = " ";', "\n");
       }
       if ($config->exists("ldap follow-referrals")) {
         push(@conf_file, '  $ldapfolref = \'', $config->returnValue("ldap follow-referrals"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapfolref = " ";', "\n");
+        push(@conf_file, '  $ldapfolref = " ";', "\n");
       }
       if ($config->exists("ldap network-timeout")) {
         push(@conf_file, '  $ldapnettime = \'', $config->returnValue("ldap network-timeout"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapnettime = " ";', "\n");
+        push(@conf_file, '  $ldapnettime = " ";', "\n");
       }
       if ($config->exists("ldap authorize base-dn")) {
         push(@conf_file, '  $ldapauthbasedn = \'', $config->returnValue("ldap authorize base-dn"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapauthbasedn = " ";', "\n");
+        push(@conf_file, '  $ldapauthbasedn = " ";', "\n");
       }
       if ($config->exists("ldap authorize search-filter")) {
-	    my $str = $config->returnValue("ldap authorize search-filter");
-	    my $find = '%u';
+        my $str = $config->returnValue("ldap authorize search-filter");
+        my $find = '%u';
         my $replace = '$username';
         $str =~ s/$find/$replace/g;
         push(@conf_file, '  $ldapauthseflt = "', $str, "\";", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapauthseflt = " ";', "\n");
+        push(@conf_file, '  $ldapauthseflt = " ";', "\n");
       }
       if ($config->exists("ldap authorize use-group")) {
         push(@conf_file, '  $ldapauthusegrp = \'', $config->returnValue("ldap authorize use-group"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapauthusegrp = " ";', "\n");
+        push(@conf_file, '  $ldapauthusegrp = " ";', "\n");
       }
       if ($config->exists("ldap authorize group base-dn")) {
         push(@conf_file, '  $ldapgrpbasedn = \'', $config->returnValue("ldap authorize group base-dn"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapgrpbasedn = " ";', "\n");
+        push(@conf_file, '  $ldapgrpbasedn = " ";', "\n");
       }
       if ($config->exists("ldap authorize group member-attr")) {
         push(@conf_file, '  $ldapgrpmemattr = \'', $config->returnValue("ldap authorize group member-attr"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $ldapgrpmemattr = " ";', "\n");
+        push(@conf_file, '  $ldapgrpmemattr = " ";', "\n");
       }
       if ($config->exists("ldap authorize group search-filter")) {
         push(@conf_file, '  $ldapgrpseflt = \'', $config->returnValue("ldap authorize group search-filter"), "';", "\n"); 
@@ -387,31 +387,31 @@ sub configure_web {
           push(@conf_file, '  $radframedprt = \'', $config->returnValue("radius framed-protocol"), "';", "\n"); 
         }
       else {
-	    push(@conf_file, '  $radframedprt = " ";', "\n");
+        push(@conf_file, '  $radframedprt = " ";', "\n");
       }
       if ($config->exists("radius nas address")) {
         push(@conf_file, '  $radnasaddr = \'', $config->returnValue("radius nas address"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $radnasaddr = " ";', "\n");
+        push(@conf_file, '  $radnasaddr = " ";', "\n");
       }
       if ($config->exists("radius nas identifier")) {
         push(@conf_file, '  $radnasid = \'', $config->returnValue("radius nas identifier"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $radnasid = " ";', "\n");
+        push(@conf_file, '  $radnasid = " ";', "\n");
       }
       if ($config->exists("radius nas port-type")) {
         push(@conf_file, '  $radnasprttype = \'', $config->returnValue("radius nas port-type"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $radnasprttype = " ";', "\n");
+        push(@conf_file, '  $radnasprttype = " ";', "\n");
       }
       if ($config->exists("radius service-type")) {
         push(@conf_file, '  $radsrvtype = \'', $config->returnValue("radius service-type"), "';", "\n"); 
       }
       else {
-	    push(@conf_file, '  $radsrvtype = " ";', "\n");
+        push(@conf_file, '  $radsrvtype = " ";', "\n");
       }
       push(@conf_file, '  $radarray = array();', "\n");
       push(@conf_file, '  $radarray[0] = $tunnel;', "\n");
@@ -432,25 +432,25 @@ sub configure_web {
           push(@conf_file0, '  $radacctport', "$x ='", $config->returnValue("radius server $server acct-port"), "';", "\n"); 
         }
         else {
-	      push(@conf_file0, '  $radacctport', "$x = ' ';", "\n");
+          push(@conf_file0, '  $radacctport', "$x = ' ';", "\n");
         }
         if ($config->exists("radius server $server auth-port")) {
           push(@conf_file0, '  $radauthport', "$x ='", $config->returnValue("radius server $server auth-port"), "';", "\n"); 
         }
         else {
-	      push(@conf_file0, '  $radauthport', "$x = ' ';", "\n");
+          push(@conf_file0, '  $radauthport', "$x = ' ';", "\n");
         }
         if ($config->exists("radius server $server name")) {
           push(@conf_file0, '  $radname', "$x ='", $config->returnValue("radius server $server name"), "';", "\n"); 
         }
         else {
-	      push(@conf_file0, '  $radname', "$x = ' ';", "\n");
+          push(@conf_file0, '  $radname', "$x = ' ';", "\n");
         }
         if ($config->exists("radius server $server shared-secret")) {
           push(@conf_file0, '  $radsecret', "$x ='", $config->returnValue("radius server $server shared-secret"), "';", "\n"); 
         }
         else {
-	      push(@conf_file0, '  $radsecret', "$x = ' ';", "\n");
+          push(@conf_file0, '  $radsecret', "$x = ' ';", "\n");
         }
         while ($z < $y) {
           push(@conf_file2, '  array($radacctport', "$z,", '$radauthport', "$z,", '$radname', "$z,", '$radsecret', "$z),", "\n");
@@ -489,7 +489,7 @@ sub configure_web {
   }
   
   foreach my $auth_opt(@user_auth) {
-	 if ($auth_opt eq "ldap") {
+     if ($auth_opt eq "ldap") {
        push(@conf_file, '  ldap($ldaparray);', "\n");
      }
      if ($auth_opt eq "radius") {
@@ -510,7 +510,6 @@ sub configure_web {
     print $fh "$_";
   }
   close $fh;
-
   exit 0;
 }
 
@@ -519,16 +518,16 @@ sub configure_web {
 #
 
 GetOptions (
-  "set_user" => \$set_user,
-  "set_web"  => \$set_web,
-  "user_cn"	 => \$user_cn,
-  "genovpn"  => \$genovpn,
-  "tun=s"    => \$tun,
-  "phpuser=s"    => \$phpuser
+  "set_user"  => \$set_user,
+  "set_web"   => \$set_web,
+  "user_cn"   => \$user_cn,
+  "genovpn"   => \$genovpn,
+  "tun=s"     => \$tun,
+  "phpuser=s" => \$phpuser
 ) or usage ();
 
 configure_users() if $set_user;
-user_cn() if $user_cn;
-gen_ovpn() if $genovpn;
-configure_web() if $set_web;
+user_cn()         if $user_cn;
+gen_ovpn()        if $genovpn;
+configure_web()   if $set_web;
 # end of file
