@@ -85,6 +85,7 @@ sub gen_ovpn {
     push(@conf_file, 'nobind', "\n");
     push(@conf_file, 'persist-key', "\n");
     push(@conf_file, 'persist-tun', "\n");
+    push(@conf_file, 'auth-user-pass', "\n");
     push(@conf_file, 'ca [inline]', "\n");
     push(@conf_file, 'cert [inline]', "\n");
     push(@conf_file, 'key [inline]', "\n");
