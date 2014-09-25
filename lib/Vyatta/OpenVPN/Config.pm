@@ -987,7 +987,7 @@ sub get_command {
     push(@conf_file, "cert $authdir/pki/issued/server-$self->{_intf}.crt\n");
     push(@conf_file, "key $authdir/pki/private/server-$self->{_intf}.key\n");
     push(@conf_file, "dh $authdir/pki/dh.pem\n");
-    push(@conf_file, "auth-user-pass \"/opt/vyatta/sbin/vyos-username-ovpn.pl\" via-env\n"
+    push(@conf_file, "auth-user-pass \"/opt/vyatta/sbin/vyos-username-ovpn.pl\" via-env\n");
     
   }
   if (defined($self->{_tls_def})) {
