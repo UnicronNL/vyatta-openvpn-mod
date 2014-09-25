@@ -1,13 +1,8 @@
 <?php
   $file = $_POST['filename'];
-  $run = "sudo /opt/vyatta/sbin/vyos-username-ovpn.pl --genovpn --tun $tunnel --phpuser $username";
   $target = "/config/auth/$tunnel/$username.ovpn";
   $link = "/tmp/$username.ovpn";
   
-  ob_start();
-  passthru($run);
-  $perlreturn = ob_get_contents();
-  ob_end_clean();
   symlink($target, $link);
 
   header('Content-Description: File Transfer');
