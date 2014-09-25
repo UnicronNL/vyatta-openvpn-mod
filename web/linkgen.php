@@ -1,15 +1,3 @@
-<?php
- $file = "sudo /opt/vyatta/sbin/vyos-username-ovpn.pl --genovpn --tun $tunnel --phpuser $username";
- ob_start();
- passthru($file);
- $perlreturn = ob_get_contents();
- ob_end_clean();
-
- $target = "/config/auth/$tunnel/$username.ovpn";
- $link = "/tmp/$username.ovpn";
- symlink($target, $link);
-
-?>
 <script language="javascript">
   function submitform() {
     document.forms["download"].submit();
